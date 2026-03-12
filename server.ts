@@ -12,9 +12,28 @@ import AdovationApply from './src/routes/Adovations';
 import StartupExpoApply from './src/routes/StartupExpo';
 import verifyOTP from './src/routes/verifyOTP';
 
-dotenv.config();
+import TheChairmansConclaveRoutes from './src/routes/TheChairmansConclave';
+import StakesAndBusiness from './src/routes/StacksAndBusiness';
+import campusCapitalist from './src/routes/CampusCapitalist';
+
+import rateLimit from 'express-rate-limit';
+import requestIp from 'request-ip';
+import helmet from 'helmet';
 
 const app = express();
+
+app.use(helmet());
+app.use(requestIp.mw());
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: 'Too many requests, please try again later',
+});
+
+app.use(limiter);
+
+dotenv.config();
+
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
@@ -65,6 +84,10 @@ app.use('/adovations', AdovationApply);
 app.use('/startup-expo', StartupExpoApply);
 app.use('/verification', verifyOTP);
 
+app.use('/api/chairmans-conclave', TheChairmansConclaveRoutes);
+app.use('/api/stakes-business', StakesAndBusiness);
+app.use('/api/campus-capitalist', campusCapitalist);
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
