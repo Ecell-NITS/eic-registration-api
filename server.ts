@@ -5,16 +5,13 @@ import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import BusinessApply from './src/routes/BusinessApply';
-import treasureApply from './src/routes/TreasureApply';
-import BidWiseApply from './src/routes/Bid-Wise';
-import AdovationApply from './src/routes/Adovations';
-import StartupExpoApply from './src/routes/StartupExpo';
 import verifyOTP from './src/routes/verifyOTP';
 
 import TheChairmansConclaveRoutes from './src/routes/TheChairmansConclave';
 import StakesAndBusiness from './src/routes/StacksAndBusiness';
 import campusCapitalist from './src/routes/CampusCapitalist';
+import adoShuffle from './src/routes/AdoShuffle';
+import dealroomEscape from './src/routes/TheDealroomEscape';
 
 import rateLimit from 'express-rate-limit';
 import requestIp from 'request-ip';
@@ -77,16 +74,14 @@ app.get('/', (_req, res) => {
 });
 
 // Route configurations
-app.use('/business', BusinessApply);
-app.use('/treasure', treasureApply);
-app.use('/bid-wise', BidWiseApply);
-app.use('/adovations', AdovationApply);
-app.use('/startup-expo', StartupExpoApply);
+
 app.use('/verification', verifyOTP);
 
 app.use('/api/chairmans-conclave', TheChairmansConclaveRoutes);
 app.use('/api/stakes-business', StakesAndBusiness);
 app.use('/api/campus-capitalist', campusCapitalist);
+app.use('/api/ado-shuffle', adoShuffle);
+app.use('/api/dealroom-escape', dealroomEscape);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

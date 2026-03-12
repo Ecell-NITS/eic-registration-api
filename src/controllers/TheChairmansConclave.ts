@@ -6,9 +6,7 @@ import sendEmail from '../utils/sendEmail';
 
 const allowedBranches: Branch[] = ['CSE', 'EE', 'ECE', 'EIE', 'CE', 'ME'];
 
-/**
- * Get all registrations
- */
+/*Get all registration*/
 export const getChairmansConclaveApplications = async (req: Request, res: Response) => {
   try {
     const applications = await prisma.theChairmansConclave.findMany({
@@ -24,9 +22,7 @@ export const getChairmansConclaveApplications = async (req: Request, res: Respon
   }
 };
 
-/**
- * Register participant
- */
+/*Register participant*/
 export const createChairmansConclaveApplication = async (req: Request, res: Response) => {
   try {
     let { name, email, phone, branch } = req.body;
@@ -67,9 +63,7 @@ export const createChairmansConclaveApplication = async (req: Request, res: Resp
       });
     }
 
-    /**
-     * Prevent duplicate email or phone
-     */
+    /*Prevent duplicate email or phone*/
     const existing = await prisma.theChairmansConclave.findFirst({
       where: {
         OR: [{ email }, { phone }],
@@ -82,9 +76,7 @@ export const createChairmansConclaveApplication = async (req: Request, res: Resp
       });
     }
 
-    /**
-     * Limit registrations per IP
-     */
+    /*Limit registrations per IP*/
     const ipCount = await prisma.theChairmansConclave.count({
       where: { ip },
     });
@@ -127,9 +119,7 @@ export const createChairmansConclaveApplication = async (req: Request, res: Resp
       throw err;
     }
 
-    /**
-     * Send confirmation email
-     */
+    /*Send confirmation email*/
 
     const subject = "The Chairman's Conclave Registration Successful";
 
@@ -200,9 +190,7 @@ Best Regards,<br/>
   }
 };
 
-/**
- * Check if user already registered
- */
+/*Check if user already registered*/
 export const checkChairmansConclaveApplication = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;

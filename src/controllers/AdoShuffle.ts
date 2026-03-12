@@ -3,11 +3,11 @@ import { Request, Response } from 'express';
 import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
-import { campusCapitalistSchema } from '../validators/CampusCapitalistValidator';
+import { adoShuffleSchema } from '../validators/AdoShuffleValidator';
 
-export const createCampusCapitalist = async (req: Request, res: Response) => {
+export const createAdoShuffle = async (req: Request, res: Response) => {
   try {
-    const parsed = campusCapitalistSchema.safeParse(req.body);
+    const parsed = adoShuffleSchema.safeParse(req.body);
 
     if (!parsed.success) {
       return res.status(400).json({
@@ -15,13 +15,18 @@ export const createCampusCapitalist = async (req: Request, res: Response) => {
       });
     }
 
-    const { teamName, branch, leaderName, leaderEmail, leaderPhone, members } = parsed.data;
+    let { leaderName, leaderEmail, leaderPhone } = parsed.data;
+    const { branch } = parsed.data;
 
     const ip = req.clientIp || 'unknown';
 
-    /*Prevent leader duplicate*/
+    leaderName = leaderName.trim();
+    leaderEmail = leaderEmail.trim().toLowerCase();
+    leaderPhone = leaderPhone.trim();
 
-    const existingLeader = await prisma.campusCapitalist.findFirst({
+    /*Prevent duplicate leader*/
+
+    const existingLeader = await prisma.adoShuffle.findFirst({
       where: {
         OR: [{ leaderEmail }, { leaderPhone }],
       },
@@ -29,13 +34,13 @@ export const createCampusCapitalist = async (req: Request, res: Response) => {
 
     if (existingLeader) {
       return res.status(400).json({
-        message: 'Leader already registered a team',
+        message: 'Leader already registered',
       });
     }
 
-    /*IP protection*/
+    /*IP Protection*/
 
-    const ipCount = await prisma.campusCapitalist.count({
+    const ipCount = await prisma.adoShuffle.count({
       where: { ip },
     });
 
@@ -45,34 +50,34 @@ export const createCampusCapitalist = async (req: Request, res: Response) => {
       });
     }
 
-    let newTeam;
+    let newRegistration;
 
     try {
-      newTeam = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const branchExists = await tx.campusCapitalist.findFirst({
+      newRegistration = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const branchExists = await tx.adoShuffle.findFirst({
           where: { branch },
         });
 
         if (branchExists) {
-          throw new Error(`Branch ${branch} already has a team`);
+          throw new Error(`Branch ${branch} already registered`);
         }
 
-        return tx.campusCapitalist.create({
+        return tx.adoShuffle.create({
           data: {
-            teamName,
-            branch: branch as Branch,
             leaderName,
             leaderEmail,
             leaderPhone,
-            members,
+            branch: branch as Branch,
             ip,
           },
         });
       });
-    } catch (err: any) {
-      if (err.message?.includes('already has a team')) {
+    } catch (err: unknown) {
+      const error = err as Error;
+
+      if (error.message?.includes('already registered')) {
         return res.status(400).json({
-          message: `Branch ${branch} already registered`,
+          message: `Branch ${branch} already has a leader`,
         });
       }
 
@@ -81,19 +86,20 @@ export const createCampusCapitalist = async (req: Request, res: Response) => {
 
     /*Email*/
 
-    const subject = 'Campus Capitalist Registration Successful';
+    const subject = 'AdoShuffle Registration Successful';
 
     const text = `
-Team ${teamName} successfully registered.
+Thank you for registering for AdoShuffle.
 
+Name: ${leaderName}
 Branch: ${branch}
 
 Team E-Cell NIT Silchar
 `;
 
     const html = `
-<h2>Campus Capitalist</h2>
-<p>Team <b>${teamName}</b> registered successfully.</p>
+<h2>AdoShuffle Registration</h2>
+<p><b>${leaderName}</b> successfully registered.</p>
 <p><b>Branch:</b> ${branch}</p>
 `;
 
@@ -105,7 +111,7 @@ Team E-Cell NIT Silchar
 
     res.status(200).json({
       message: 'Registration successful',
-      team: newTeam,
+      data: newRegistration,
     });
   } catch (error) {
     console.error(error);
@@ -116,55 +122,51 @@ Team E-Cell NIT Silchar
   }
 };
 
-export const getCampusCapitalistTeams = async (req: Request, res: Response) => {
+export const getAdoShuffleRegistrations = async (req: Request, res: Response) => {
   try {
-    const teams = await prisma.campusCapitalist.findMany({
+    const registrations = await prisma.adoShuffle.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(teams);
+    res.json(registrations);
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
-      message: 'Failed to fetch teams',
+      message: 'Failed to fetch registrations',
     });
   }
 };
-export const checkCampusCapitalistApplication = async (req: Request, res: Response) => {
+
+export const checkAdoShuffleApplication = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
-        message: 'Email is required',
+        message: 'Email required',
       });
     }
 
-    const team = await prisma.campusCapitalist.findFirst({
+    const application = await prisma.adoShuffle.findFirst({
       where: {
         leaderEmail: email.trim().toLowerCase(),
       },
     });
 
-    res.json(team);
+    res.json(application);
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
       message: 'Error checking application',
     });
   }
 };
-
-export const getCampusCapitalistSlots = async (req: Request, res: Response) => {
+export const getAdoShuffleSlots = async (req: Request, res: Response) => {
   try {
     const branches = Object.values(Branch);
 
     const result: Record<string, string> = {};
 
     for (const branch of branches) {
-      const count = await prisma.campusCapitalist.count({
+      const count = await prisma.adoShuffle.count({
         where: { branch },
       });
 

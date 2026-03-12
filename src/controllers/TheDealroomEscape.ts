@@ -1,17 +1,14 @@
 /* eslint-disable no-console */
+
 import { Request, Response } from 'express';
-import { Prisma } from '@prisma/client';
+import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
-import { stakesAndBusinessSchema } from '../validators/StacksAndBusinessValidator';
-import { Branch } from '@prisma/client';
+import { dealroomEscapeSchema } from '../validators/TheDealroomEscapeValidator';
 
-/*Register Team*/
-export const createStakesApplication = async (req: Request, res: Response) => {
+export const createDealroomEscape = async (req: Request, res: Response) => {
   try {
-    /* Validate Request */
-
-    const parsed = stakesAndBusinessSchema.safeParse(req.body);
+    const parsed = dealroomEscapeSchema.safeParse(req.body);
 
     if (!parsed.success) {
       return res.status(400).json({
@@ -19,29 +16,22 @@ export const createStakesApplication = async (req: Request, res: Response) => {
       });
     }
 
-    let {
-      teamName,
-      branch,
-      leaderName,
-      leaderEmail,
-      leaderPhone,
-      // members
-    } = parsed.data;
+    let { teamName, leaderName, leaderEmail, leaderPhone } = parsed.data;
+
+    const { branch } = parsed.data;
+
     const members = parsed.data.members;
 
     const ip = req.clientIp || 'unknown';
-
-    /* Normalize Inputs */
 
     teamName = teamName.trim();
     leaderName = leaderName.trim();
     leaderEmail = leaderEmail.trim().toLowerCase();
     leaderPhone = leaderPhone.trim();
-    branch = branch.toUpperCase() as Branch;
 
-    /* Prevent Leader Duplicate */
+    /*Leader Duplicate*/
 
-    const existingLeader = await prisma.stakesAndBusiness.findFirst({
+    const existingLeader = await prisma.theDealroomEscape.findFirst({
       where: {
         OR: [{ leaderEmail }, { leaderPhone }],
       },
@@ -53,102 +43,84 @@ export const createStakesApplication = async (req: Request, res: Response) => {
       });
     }
 
-    /* IP Protection*/
+    /*IP Protection*/
 
-    const ipCount = await prisma.stakesAndBusiness.count({
+    const ipCount = await prisma.theDealroomEscape.count({
       where: { ip },
     });
 
     if (ipCount >= 3) {
       return res.status(400).json({
-        message: 'Too many registrations from the same network',
+        message: 'Too many registrations from same network',
       });
     }
-
-    /* Transaction Branch Lock */
 
     let newTeam;
 
     try {
       newTeam = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const existingBranch = await tx.stakesAndBusiness.findFirst({
+        const branchExists = await tx.theDealroomEscape.findFirst({
           where: { branch },
         });
 
-        if (existingBranch) {
-          throw new Error(`Branch ${branch} already has a team`);
+        if (branchExists) {
+          throw new Error(`Branch ${branch} already registered`);
         }
 
-        return tx.stakesAndBusiness.create({
+        return tx.theDealroomEscape.create({
           data: {
             teamName,
-            branch,
+            branch: branch as Branch,
             leaderName,
             leaderEmail,
             leaderPhone,
-            members,
+            members: [
+              {
+                name: leaderName,
+                email: leaderEmail,
+                phone: leaderPhone,
+              },
+              ...members,
+            ],
             ip,
           },
         });
       });
     } catch (err: unknown) {
       const error = err as Error;
-      if (error.message?.includes('already has a team')) {
+
+      if (error.message?.includes('already registered')) {
         return res.status(400).json({
-          message: `Branch ${branch} already has a registered team`,
+          message: `Branch ${branch} already has a team`,
         });
       }
 
       throw err;
     }
 
-    /* Send Confirmation Email */
+    /* ---------- Email ---------- */
 
-    const subject = 'Stakes and Business Registration Successful';
+    const subject = 'The Dealroom Escape Registration Successful';
 
     const text = `
-Thank you for registering for Stakes and Business.
+Team ${teamName} successfully registered.
 
-Team Name: ${teamName}
 Branch: ${branch}
 
-Your team registration has been successfully received.
-
-Best Regards,
 Team E-Cell NIT Silchar
 `;
 
     const html = `
-<!DOCTYPE html>
-<html>
-<body style="font-family:Arial">
-
-<h2>Stakes and Business Registration</h2>
-
-<p>Team <b>${teamName}</b> has successfully registered.</p>
-
+<h2>The Dealroom Escape</h2>
+<p>Team <b>${teamName}</b> registered successfully.</p>
 <p><b>Branch:</b> ${branch}</p>
-
-<p>We will contact you soon with further details.</p>
-
-<br>
-
-<p>
-Best Regards<br>
-Team E-Cell NIT Silchar
-</p>
-
-</body>
-</html>
 `;
 
     try {
       await sendEmail(leaderEmail, subject, text, html);
-    } catch (emailError) {
-      console.error('Email sending failed:', emailError);
+    } catch (error) {
+      console.error('Email error:', error);
     }
-
-    /* Success Response */
 
     res.status(200).json({
       message: 'Registration successful',
@@ -163,35 +135,31 @@ Team E-Cell NIT Silchar
   }
 };
 
-/*Get All Teams (Admin)*/
-export const getStakesTeams = async (req: Request, res: Response) => {
+export const getDealroomEscapeTeams = async (req: Request, res: Response) => {
   try {
-    const teams = await prisma.stakesAndBusiness.findMany({
+    const teams = await prisma.theDealroomEscape.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
     res.json(teams);
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
       message: 'Failed to fetch teams',
     });
   }
 };
 
-/*Check Registration*/
-export const checkStakesApplication = async (req: Request, res: Response) => {
+export const checkDealroomEscapeApplication = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
-        message: 'Email is required',
+        message: 'Email required',
       });
     }
 
-    const team = await prisma.stakesAndBusiness.findFirst({
+    const team = await prisma.theDealroomEscape.findFirst({
       where: {
         leaderEmail: email.trim().toLowerCase(),
       },
@@ -199,21 +167,20 @@ export const checkStakesApplication = async (req: Request, res: Response) => {
 
     res.json(team);
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
       message: 'Error checking application',
     });
   }
 };
-export const getStakesSlots = async (req: Request, res: Response) => {
+
+export const getDealroomEscapeSlots = async (req: Request, res: Response) => {
   try {
-    const branches = Object.values(Branch);
+    const branches: Branch[] = ['CSE', 'EE', 'ECE', 'EIE', 'CE', 'ME'];
 
     const result: Record<string, string> = {};
 
     for (const branch of branches) {
-      const count = await prisma.stakesAndBusiness.count({
+      const count = await prisma.theDealroomEscape.count({
         where: { branch },
       });
 
