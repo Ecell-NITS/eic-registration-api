@@ -1,16 +1,13 @@
 /* eslint-disable no-console */
 import { Request, Response } from 'express';
-import { Prisma } from '@prisma/client';
+import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { stakesAndBusinessSchema } from '../validators/StacksAndBusinessValidator';
-import { Branch } from '@prisma/client';
 
-/*Register Team*/
+/*Register – 4 members from one branch*/
 export const createStakesApplication = async (req: Request, res: Response) => {
   try {
-    /* Validate Request */
-
     const parsed = stakesAndBusinessSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -19,75 +16,29 @@ export const createStakesApplication = async (req: Request, res: Response) => {
       });
     }
 
-    let {
-      teamName,
-      branch,
-      leaderName,
-      leaderEmail,
-      leaderPhone,
-      // members
-    } = parsed.data;
-    const members = parsed.data.members;
+    const { members } = parsed.data;
+    const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
+    const branch = parsed.data.branch.toUpperCase() as Branch;
 
-    const ip = req.clientIp || 'unknown';
-
-    /* Normalize Inputs */
-
-    teamName = teamName.trim();
-    leaderName = leaderName.trim();
-    leaderEmail = leaderEmail.trim().toLowerCase();
-    leaderPhone = leaderPhone.trim();
-    branch = branch.toUpperCase() as Branch;
-
-    /* Prevent Leader Duplicate */
-
-    const existingLeader = await prisma.stakesAndBusiness.findFirst({
-      where: {
-        OR: [{ leaderEmail }, { leaderPhone }],
-      },
-    });
-
-    if (existingLeader) {
-      return res.status(400).json({
-        message: 'Leader already registered a team',
-      });
-    }
-
-    /* IP Protection*/
-
-    const ipCount = await prisma.stakesAndBusiness.count({
-      where: { ip },
-    });
-
-    if (ipCount >= 3) {
-      return res.status(400).json({
-        message: 'Too many registrations from the same network',
-      });
-    }
-
-    /* Transaction Branch Lock */
+    /* Transaction – one registration per branch */
 
     let newTeam;
 
     try {
       newTeam = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const existingBranch = await tx.stakesAndBusiness.findFirst({
+        const existing = await tx.stakesAndBusiness.findUnique({
           where: { branch },
         });
 
-        if (existingBranch) {
+        if (existing) {
           throw new Error(`Branch ${branch} already has a team`);
         }
 
         return tx.stakesAndBusiness.create({
           data: {
-            teamName,
             branch,
-            leaderName,
-            leaderEmail,
-            leaderPhone,
+            contactEmail,
             members,
-            ip,
           },
         });
       });
@@ -98,19 +49,18 @@ export const createStakesApplication = async (req: Request, res: Response) => {
           message: `Branch ${branch} already has a registered team`,
         });
       }
-
       throw err;
     }
 
-    /* Send Confirmation Email */
+    /* Send confirmation email */
 
     const subject = 'Stakes and Business Registration Successful';
 
     const text = `
 Thank you for registering for Stakes and Business.
 
-Team Name: ${teamName}
 Branch: ${branch}
+Members: ${members.map(m => m.name).join(', ')}
 
 Your team registration has been successfully received.
 
@@ -121,29 +71,39 @@ Team E-Cell NIT Silchar
     const html = `
 <!DOCTYPE html>
 <html>
-<body style="font-family:Arial">
+<body style="font-family: Arial, sans-serif; background-color: #111111; color: #e2e8f0; margin: 0; padding: 40px 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a; border: 1px solid #2a3a30; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <div style="background-color: #152218; border-bottom: 1px solid #2a3a30; padding: 25px; text-align: center;">
+            <p style="margin: 0; color: #cee7d7; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">EIC 2026 Registration</p>
+            <h2 style="margin: 10px 0 0; color: #ffffff; font-size: 24px;">Stakes & Business</h2>
+        </div>
+        <div style="padding: 30px;">
+            <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">Your registration for <strong>Stakes & Business</strong> has been successfully completed.</p>
+            
+            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                <p style="margin: 0 0 10px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Registered Branch</p>
+                <p style="margin: 0; font-size: 18px; font-weight: bold; color: #cee7d7;">${branch}</p>
+            </div>
 
-<h2>Stakes and Business Registration</h2>
+            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px;">
+                <p style="margin: 0 0 15px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Team Members</p>
+                <ul style="margin: 0; padding: 0; list-style-type: none;">
+                    ${members.map(m => `<li style="padding: 10px 0; border-bottom: 1px solid #2a3a30; color: #ffffff;"><strong>${m.name}</strong></li>`).join('')}
+                </ul>
+            </div>
 
-<p>Team <b>${teamName}</b> has successfully registered.</p>
-
-<p><b>Branch:</b> ${branch}</p>
-
-<p>We will contact you soon with further details.</p>
-
-<br>
-
-<p>
-Best Regards<br>
-Team E-Cell NIT Silchar
-</p>
-
+            <p style="margin: 25px 0 0; font-size: 14px; color: #94a3b8; line-height: 1.6;">Further event details and updates will be communicated to this email address.</p>
+        </div>
+        <div style="background-color: #0a0a0a; border-top: 1px solid #2a3a30; padding: 20px; text-align: center;">
+            <p style="margin: 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} E-Cell NIT Silchar. All rights reserved.</p>
+        </div>
+    </div>
 </body>
 </html>
 `;
 
     try {
-      await sendEmail(leaderEmail, subject, text, html);
+      await sendEmail(contactEmail, subject, text, html);
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
     }
@@ -180,21 +140,21 @@ export const getStakesTeams = async (req: Request, res: Response) => {
   }
 };
 
-/*Check Registration*/
+/*Find application by branch*/
 export const checkStakesApplication = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { branch } = req.body;
 
-    if (!email) {
+    if (!branch) {
       return res.status(400).json({
-        message: 'Email is required',
+        message: 'Branch is required',
       });
     }
 
-    const team = await prisma.stakesAndBusiness.findFirst({
-      where: {
-        leaderEmail: email.trim().toLowerCase(),
-      },
+    const branchUpper = String(branch).toUpperCase() as Branch;
+
+    const team = await prisma.stakesAndBusiness.findUnique({
+      where: { branch: branchUpper },
     });
 
     res.json(team);
@@ -206,6 +166,8 @@ export const checkStakesApplication = async (req: Request, res: Response) => {
     });
   }
 };
+
+/*Get slots*/
 export const getStakesSlots = async (req: Request, res: Response) => {
   try {
     const branches = Object.values(Branch);

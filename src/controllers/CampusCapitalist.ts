@@ -5,6 +5,7 @@ import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { campusCapitalistSchema } from '../validators/CampusCapitalistValidator';
 
+/*Register – 3 to 5 members from one branch*/
 export const createCampusCapitalist = async (req: Request, res: Response) => {
   try {
     const parsed = campusCapitalistSchema.safeParse(req.body);
@@ -15,90 +16,91 @@ export const createCampusCapitalist = async (req: Request, res: Response) => {
       });
     }
 
-    const { teamName, branch, leaderName, leaderEmail, leaderPhone, members } = parsed.data;
+    const { members } = parsed.data;
+    const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
+    const branch = parsed.data.branch.toUpperCase() as Branch;
 
-    const ip = req.clientIp || 'unknown';
-
-    /*Prevent leader duplicate*/
-
-    const existingLeader = await prisma.campusCapitalist.findFirst({
-      where: {
-        OR: [{ leaderEmail }, { leaderPhone }],
-      },
-    });
-
-    if (existingLeader) {
-      return res.status(400).json({
-        message: 'Leader already registered a team',
-      });
-    }
-
-    /*IP protection*/
-
-    const ipCount = await prisma.campusCapitalist.count({
-      where: { ip },
-    });
-
-    if (ipCount >= 3) {
-      return res.status(400).json({
-        message: 'Too many registrations from same network',
-      });
-    }
+    /* Transaction – one registration per branch */
 
     let newTeam;
 
     try {
       newTeam = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const branchExists = await tx.campusCapitalist.findFirst({
+        const existing = await tx.campusCapitalist.findUnique({
           where: { branch },
         });
 
-        if (branchExists) {
+        if (existing) {
           throw new Error(`Branch ${branch} already has a team`);
         }
 
         return tx.campusCapitalist.create({
           data: {
-            teamName,
-            branch: branch as Branch,
-            leaderName,
-            leaderEmail,
-            leaderPhone,
+            branch,
+            contactEmail,
             members,
-            ip,
           },
         });
       });
-    } catch (err: any) {
-      if (err.message?.includes('already has a team')) {
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error.message?.includes('already has a team')) {
         return res.status(400).json({
           message: `Branch ${branch} already registered`,
         });
       }
-
       throw err;
     }
 
-    /*Email*/
+    /* Email */
 
     const subject = 'Campus Capitalist Registration Successful';
 
     const text = `
-Team ${teamName} successfully registered.
+Thank you for registering for Campus Capitalist.
 
 Branch: ${branch}
+Members: ${members.map(m => m.name).join(', ')}
 
 Team E-Cell NIT Silchar
 `;
 
     const html = `
-<h2>Campus Capitalist</h2>
-<p>Team <b>${teamName}</b> registered successfully.</p>
-<p><b>Branch:</b> ${branch}</p>
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; background-color: #111111; color: #e2e8f0; margin: 0; padding: 40px 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a; border: 1px solid #2a3a30; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <div style="background-color: #152218; border-bottom: 1px solid #2a3a30; padding: 25px; text-align: center;">
+            <p style="margin: 0; color: #cee7d7; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">EIC 2026 Registration</p>
+            <h2 style="margin: 10px 0 0; color: #ffffff; font-size: 24px;">Campus Capitalist</h2>
+        </div>
+        <div style="padding: 30px;">
+            <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">Your registration for <strong>Campus Capitalist</strong> has been successfully completed.</p>
+            
+            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                <p style="margin: 0 0 10px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Registered Branch</p>
+                <p style="margin: 0; font-size: 18px; font-weight: bold; color: #cee7d7;">${branch}</p>
+            </div>
+
+            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px;">
+                <p style="margin: 0 0 15px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Team Members</p>
+                <ul style="margin: 0; padding: 0; list-style-type: none;">
+                    ${members.map(m => `<li style="padding: 10px 0; border-bottom: 1px solid #2a3a30; color: #ffffff;"><strong>${m.name}</strong></li>`).join('')}
+                </ul>
+            </div>
+
+            <p style="margin: 25px 0 0; font-size: 14px; color: #94a3b8; line-height: 1.6;">Further event details and updates will be communicated to this email address.</p>
+        </div>
+        <div style="background-color: #0a0a0a; border-top: 1px solid #2a3a30; padding: 20px; text-align: center;">
+            <p style="margin: 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} E-Cell NIT Silchar. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
 `;
 
     try {
-      await sendEmail(leaderEmail, subject, text, html);
+      await sendEmail(contactEmail, subject, text, html);
     } catch (error) {
       console.error('Email error:', error);
     }
@@ -116,6 +118,7 @@ Team E-Cell NIT Silchar
   }
 };
 
+/*Get All Teams (Admin)*/
 export const getCampusCapitalistTeams = async (req: Request, res: Response) => {
   try {
     const teams = await prisma.campusCapitalist.findMany({
@@ -131,20 +134,22 @@ export const getCampusCapitalistTeams = async (req: Request, res: Response) => {
     });
   }
 };
+
+/*Find application by branch*/
 export const checkCampusCapitalistApplication = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { branch } = req.body;
 
-    if (!email) {
+    if (!branch) {
       return res.status(400).json({
-        message: 'Email is required',
+        message: 'Branch is required',
       });
     }
 
-    const team = await prisma.campusCapitalist.findFirst({
-      where: {
-        leaderEmail: email.trim().toLowerCase(),
-      },
+    const branchUpper = String(branch).toUpperCase() as Branch;
+
+    const team = await prisma.campusCapitalist.findUnique({
+      where: { branch: branchUpper },
     });
 
     res.json(team);
@@ -157,6 +162,7 @@ export const checkCampusCapitalistApplication = async (req: Request, res: Respon
   }
 };
 
+/*Get slots*/
 export const getCampusCapitalistSlots = async (req: Request, res: Response) => {
   try {
     const branches = Object.values(Branch);

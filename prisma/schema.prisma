@@ -14,7 +14,6 @@ model Otp {
   createdAt DateTime @default(now())
 }
 
-
 enum Branch {
   CSE
   EE
@@ -24,77 +23,48 @@ enum Branch {
   ME
 }
 
+type Member {
+  name  String
+  year  Int
+  phone String
+}
+
 model TheChairmansConclave {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String   @unique
-  phone     String   @unique
-  branch    Branch
-  ip        String?
-  createdAt DateTime @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  branch       Branch   @unique
+  contactEmail String
+  members      Member[]
+  createdAt    DateTime @default(now())
 }
 
 model StakesAndBusiness {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamName    String
-  branch      Branch   @unique
-  leaderName  String
-  leaderEmail String   @unique
-  leaderPhone String
-  ip          String?
-  members     TeamMember[]
-  createdAt   DateTime @default(now())
-}
-
-type TeamMember {
-  name  String
-  email String
-  phone String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  branch       Branch   @unique
+  contactEmail String
+  members      Member[]
+  createdAt    DateTime @default(now())
 }
 
 model CampusCapitalist {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamName    String
-  branch      Branch   @unique
-  leaderName  String
-  leaderEmail String   @unique
-  leaderPhone String
-  ip          String?
-  members     CampusMember[]
-  createdAt   DateTime @default(now())
-}
-
-type CampusMember {
-  name  String
-  email String
-  phone String
-  year  Int
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  branch       Branch   @unique
+  contactEmail String
+  members      Member[]
+  createdAt    DateTime @default(now())
 }
 
 model AdoShuffle {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  leaderName  String
-  leaderEmail String   @unique
-  leaderPhone String
-  branch      Branch   @unique
-  ip          String?
-  createdAt   DateTime @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  branch       Branch   @unique
+  contactEmail String
+  members      Member[]
+  createdAt    DateTime @default(now())
 }
 
 model TheDealroomEscape {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamName    String
-  branch      Branch   @unique
-  leaderName  String
-  leaderEmail String   @unique
-  leaderPhone String
-  members     DealroomMember[]
-  ip          String?
-  createdAt   DateTime @default(now())
-}
-
-type DealroomMember {
-  name  String
-  email String
-  phone String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  branch       Branch   @unique
+  contactEmail String
+  members      Member[]
+  createdAt    DateTime @default(now())
 }

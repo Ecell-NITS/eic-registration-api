@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable prettier/prettier */
 import express from 'express';
-import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -14,13 +13,13 @@ import adoShuffle from './src/routes/AdoShuffle';
 import dealroomEscape from './src/routes/TheDealroomEscape';
 
 import rateLimit from 'express-rate-limit';
-import requestIp from 'request-ip';
+
 import helmet from 'helmet';
 
 const app = express();
 
 app.use(helmet());
-app.use(requestIp.mw());
+
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   max: 20,
@@ -32,7 +31,7 @@ app.use(limiter);
 dotenv.config();
 
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 app.use(express.json());
 //use cors for client url set in env if not set then allow all origins
@@ -56,21 +55,24 @@ async function connectToDatabase() {
 
 connectToDatabase();
 
-function reloadWebsite() {
-  axios
-    .get('https://event-registrations-api.onrender.com')
-    .then(response => {
-      console.log('Time Noted for Website Update:', response.status);
-    })
-    .catch(error => {
-      console.error('Error reloading website:', error.message);
-    });
-}
+// function reloadWebsite() {
+//   axios
+//     .get('https://event-registrations-api.onrender.com')
+//     .then(response => {
+//       console.log('Time Noted for Website Update:', response.status);
+//     })
+//     .catch(error => {
+//       console.error('Error reloading website:', error.message);
+//     });
+// }
 
-setInterval(reloadWebsite, 1000 * 60 * 10); // Reload every 10 minutes
+// setInterval(reloadWebsite, 1000 * 60 * 10); // Reload every 10 minutes
 
 app.get('/', (_req, res) => {
-  res.send({ message: 'This is the event registrations API for E-Cell NIT Silchar.', status: 200 });
+  res.send({
+    message: 'This is the event registrations API for EIC organised by E-Cell NIT Silchar.',
+    status: 200,
+  });
 });
 
 // Route configurations

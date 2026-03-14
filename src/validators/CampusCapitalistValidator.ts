@@ -1,37 +1,38 @@
 import { z } from 'zod';
 
 const memberSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().regex(/^[0-9]{10}$/),
-  year: z.number().min(1).max(4),
+  name: z.string().min(2, 'Member name must be at least 2 characters'),
+  year: z
+    .number()
+    .int()
+    .min(1, 'Year must be between 1 and 4')
+    .max(4, 'Year must be between 1 and 4'),
+  phone: z
+    .string()
+    .length(10, 'Phone must be exactly 10 digits')
+    .regex(/^[0-9]+$/, 'Phone must contain only numbers'),
 });
 
 export const campusCapitalistSchema = z
   .object({
-    teamName: z.string().min(2),
-
     branch: z.enum(['CSE', 'EE', 'ECE', 'EIE', 'CE', 'ME']),
-
-    leaderName: z.string().min(2),
-
-    leaderEmail: z.string().email(),
-
-    leaderPhone: z.string().regex(/^[0-9]{10}$/),
-
+    contactEmail: z.string().email('Invalid contact email'),
     members: z
       .array(memberSchema)
-      .min(3, 'Team must have at least 3 members')
-      .max(5, 'Team can have maximum 5 members'),
+      .min(3, 'At least 3 members are required')
+      .max(5, 'Maximum 5 members allowed'),
   })
   .superRefine((data, ctx) => {
-    const seniorExists = data.members.some(m => m.year === 3 || m.year === 4);
+    const phones = new Set<string>();
 
-    if (!seniorExists) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'At least one 3rd or 4th year member is required',
-        path: ['members'],
-      });
-    }
+    data.members.forEach((member, index) => {
+      if (phones.has(member.phone)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['members', index, 'phone'],
+          message: 'Duplicate phone number',
+        });
+      }
+      phones.add(member.phone);
+    });
   });
