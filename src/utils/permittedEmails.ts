@@ -2,32 +2,32 @@ import { Branch } from '@prisma/client';
 
 export const permittedEmails: Record<Branch, string[]> = {
   [Branch.CSE]: [
-    'dasbishal1717@gmail.com',
+    'shreyaagarwala1988@gmail.com',
     'dasnarayan1717@gmail.com',
     'muskan_ug_23@civil.nits.ac.in',
   ],
   [Branch.EE]: [
-    'dasbishal1717@gmail.com',
+    'shreyaagarwala1988@gmail.com',
     'dasnarayan1717@gmail.com',
     'muskan_ug_23@civil.nits.ac.in',
   ],
   [Branch.ECE]: [
-    'dasbishal1717@gmail.com',
+    'shreyaagarwala1988@gmail.com',
     'dasnarayan1717@gmail.com',
     'muskan_ug_23@civil.nits.ac.in',
   ],
   [Branch.EIE]: [
-    'dasbishal1717@gmail.com',
+    'shreyaagarwala1988@gmail.com',
     'dasnarayan1717@gmail.com',
     'muskan_ug_23@civil.nits.ac.in',
   ],
   [Branch.CE]: [
-    'dasbishal1717@gmail.com',
+    'shreyaagarwala1988@gmail.com',
     'dasnarayan1717@gmail.com',
     'muskan_ug_23@civil.nits.ac.in',
   ],
   [Branch.ME]: [
-    'dasbishal1717@gmail.com',
+    'shreyaagarwala1988@gmail.com',
     'dasnarayan1717@gmail.com',
     'muskan_ug_23@civil.nits.ac.in',
   ],
