@@ -58,7 +58,7 @@ connectToDatabase();
 
 function reloadWebsite() {
   axios
-    .get('https://eic-registration-api-new-ecell.onrender.com')
+    .get('https://eic-registration-api.onrender.com')
     .then(response => {
       console.log('Time Noted for Website Update:', response.status);
     })
