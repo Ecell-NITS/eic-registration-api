@@ -4,6 +4,7 @@ import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { stakesAndBusinessSchema } from '../validators/StacksAndBusinessValidator';
+import { isEmailPermittedForBranch } from '../utils/permittedEmails';
 
 /*Register – 4 members from one branch*/
 export const createStakesApplication = async (req: Request, res: Response) => {
@@ -19,6 +20,12 @@ export const createStakesApplication = async (req: Request, res: Response) => {
     const { members } = parsed.data;
     const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
     const branch = parsed.data.branch.toUpperCase() as Branch;
+
+    if (!isEmailPermittedForBranch(contactEmail, branch)) {
+      return res.status(403).json({
+        message: 'Email does not have permission',
+      });
+    }
 
     /* Transaction – one registration per branch */
 
@@ -54,10 +61,10 @@ export const createStakesApplication = async (req: Request, res: Response) => {
 
     /* Send confirmation email */
 
-    const subject = 'Stakes and Business Registration Successful';
+    const subject = 'Boardroom Trivia Registration Successful';
 
     const text = `
-Thank you for registering for Stakes and Business.
+Thank you for registering for Boardroom Trivia.
 
 Branch: ${branch}
 Members: ${members.map(m => m.name).join(', ')}
@@ -75,10 +82,10 @@ Team E-Cell NIT Silchar
     <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a; border: 1px solid #2a3a30; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
         <div style="background-color: #152218; border-bottom: 1px solid #2a3a30; padding: 25px; text-align: center;">
             <p style="margin: 0; color: #cee7d7; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">EIC 2026 Registration</p>
-            <h2 style="margin: 10px 0 0; color: #ffffff; font-size: 24px;">Stakes & Business</h2>
+            <h2 style="margin: 10px 0 0; color: #ffffff; font-size: 24px;">Boardroom Trivia</h2>
         </div>
         <div style="padding: 30px;">
-            <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">Your registration for <strong>Stakes & Business</strong> has been successfully completed.</p>
+            <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">Your registration for <strong>Boardroom Trivia</strong> has been successfully completed.</p>
             
             <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
                 <p style="margin: 0 0 10px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Registered Branch</p>

@@ -4,6 +4,7 @@ import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { campusCapitalistSchema } from '../validators/CampusCapitalistValidator';
+import { isEmailPermittedForBranch } from '../utils/permittedEmails';
 
 /*Register – 3 to 5 members from one branch*/
 export const createCampusCapitalist = async (req: Request, res: Response) => {
@@ -19,6 +20,12 @@ export const createCampusCapitalist = async (req: Request, res: Response) => {
     const { members } = parsed.data;
     const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
     const branch = parsed.data.branch.toUpperCase() as Branch;
+
+    if (!isEmailPermittedForBranch(contactEmail, branch)) {
+      return res.status(403).json({
+        message: 'Email does not have permission',
+      });
+    }
 
     /* Transaction – one registration per branch */
 

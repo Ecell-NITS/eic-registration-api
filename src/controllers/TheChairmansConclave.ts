@@ -4,6 +4,7 @@ import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { chairmansConclaveSchema } from '../validators/TheChairmanConclaveValidator';
+import { isEmailPermittedForBranch } from '../utils/permittedEmails';
 
 /*Register – 2 members from one branch*/
 export const createChairmansConclaveApplication = async (req: Request, res: Response) => {
@@ -19,6 +20,12 @@ export const createChairmansConclaveApplication = async (req: Request, res: Resp
     const { members } = parsed.data;
     const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
     const branch = parsed.data.branch.toUpperCase() as Branch;
+
+    if (!isEmailPermittedForBranch(contactEmail, branch)) {
+      return res.status(403).json({
+        message: 'Email does not have permission',
+      });
+    }
 
     /* Transaction – one registration per branch */
 

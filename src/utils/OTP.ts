@@ -1,10 +1,16 @@
 import { Request, Response } from 'express';
 import sendEmail from './sendEmail';
 import prisma from '../../prisma/prismaClient';
+import { isAnyEmailPermitted } from './permittedEmails';
 
 export const sendOtp = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
+
+    if (!isAnyEmailPermitted(email)) {
+      return res.status(403).json({ message: 'Email does not have permission' });
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`OTP for ${email} is ${otp}`);
     const otpPrev = await prisma.otp.deleteMany({

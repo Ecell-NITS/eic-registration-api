@@ -4,8 +4,9 @@ import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { adoShuffleSchema } from '../validators/AdoShuffleValidator';
+import { isEmailPermittedForBranch } from '../utils/permittedEmails';
 
-/*Register – max 5 members from each branch*/
+/*Register – exactly 5 members from each branch*/
 export const createAdoShuffle = async (req: Request, res: Response) => {
   try {
     const parsed = adoShuffleSchema.safeParse(req.body);
@@ -19,6 +20,12 @@ export const createAdoShuffle = async (req: Request, res: Response) => {
     const { members } = parsed.data;
     const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
     const branch = parsed.data.branch.toUpperCase() as Branch;
+
+    if (!isEmailPermittedForBranch(contactEmail, branch)) {
+      return res.status(403).json({
+        message: 'Email does not have permission',
+      });
+    }
 
     /* Transaction – one registration per branch */
 

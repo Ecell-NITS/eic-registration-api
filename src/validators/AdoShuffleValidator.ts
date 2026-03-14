@@ -19,8 +19,8 @@ export const adoShuffleSchema = z
     contactEmail: z.string().email('Invalid contact email'),
     members: z
       .array(memberSchema)
-      .min(1, 'At least 1 member is required')
-      .max(5, 'Maximum 5 members allowed'),
+      .min(5, 'Exactly 5 members are required')
+      .max(5, 'Exactly 5 members are required'),
   })
   .superRefine((data, ctx) => {
     const phones = new Set<string>();
