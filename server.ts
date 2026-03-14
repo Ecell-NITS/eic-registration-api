@@ -3,6 +3,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
+import axios from 'axios';
 import dotenv from 'dotenv';
 import verifyOTP from './src/routes/verifyOTP';
 
@@ -55,18 +56,18 @@ async function connectToDatabase() {
 
 connectToDatabase();
 
-// function reloadWebsite() {
-//   axios
-//     .get('https://event-registrations-api.onrender.com')
-//     .then(response => {
-//       console.log('Time Noted for Website Update:', response.status);
-//     })
-//     .catch(error => {
-//       console.error('Error reloading website:', error.message);
-//     });
-// }
+function reloadWebsite() {
+  axios
+    .get('https://eic-registration-api.onrender.com')
+    .then(response => {
+      console.log('Time Noted for Website Update:', response.status);
+    })
+    .catch(error => {
+      console.error('Error reloading website:', error.message);
+    });
+}
 
-// setInterval(reloadWebsite, 1000 * 60 * 10); // Reload every 10 minutes
+setInterval(reloadWebsite, 1000 * 60 * 10); // Reload every 10 minutes
 
 app.get('/', (_req, res) => {
   res.send({
