@@ -2,35 +2,23 @@ import { Branch } from '@prisma/client';
 
 export const permittedEmails: Record<Branch, string[]> = {
   [Branch.CSE]: [
-    'shreyaagarwala1988@gmail.com',
-    'dasnarayan1717@gmail.com',
-    'muskan_ug_23@civil.nits.ac.in',
+    'kartika.jauhari28@gmail.com',
+    'soumyaranjandash005@gmail.com',
+    'dasbishal1717@gmail.com',
   ],
   [Branch.EE]: [
-    'shreyaagarwala1988@gmail.com',
+    'connectwithshreyash@gmail.com',
     'dasnarayan1717@gmail.com',
-    'muskan_ug_23@civil.nits.ac.in',
+    'himapahi38@gmail.com',
   ],
   [Branch.ECE]: [
-    'shreyaagarwala1988@gmail.com',
-    'dasnarayan1717@gmail.com',
-    'muskan_ug_23@civil.nits.ac.in',
+    'koustubhmishra2003@gmail.com',
+    'tejeshpandey30@gmail.com',
+    'ahironsharma08@gmail.com',
   ],
-  [Branch.EIE]: [
-    'shreyaagarwala1988@gmail.com',
-    'dasnarayan1717@gmail.com',
-    'muskan_ug_23@civil.nits.ac.in',
-  ],
-  [Branch.CE]: [
-    'shreyaagarwala1988@gmail.com',
-    'dasnarayan1717@gmail.com',
-    'muskan_ug_23@civil.nits.ac.in',
-  ],
-  [Branch.ME]: [
-    'shreyaagarwala1988@gmail.com',
-    'dasnarayan1717@gmail.com',
-    'muskan_ug_23@civil.nits.ac.in',
-  ],
+  [Branch.EIE]: ['agrimagoel30@gmail.com', 'anmol.s.sahoo@gmail.com', 'bishaldad1717@gmail.com'],
+  [Branch.CE]: ['prabhatrai1204@gmail.com', 'mgogoi080203@gmail.com', 'atulboi222@gmail.com'],
+  [Branch.ME]: ['k.saksham2022@gmail.com', 'k.saksham2022@gmail.com', 'k.saksham2022@gmail.com'],
 };
 
 /**
