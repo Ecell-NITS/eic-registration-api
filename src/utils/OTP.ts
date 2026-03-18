@@ -92,16 +92,20 @@ export const sendOtp = async (req: Request, res: Response) => {
   </body>
 </html>
 `;
-    try {
-      await sendEmail(
-        email,
-        'OTP for verification',
-        `Your OTP is ${otp}. It will expire in 5 minutes.`,
-        html,
-      );
-    } catch (error) {
-      console.error('Error sending email for OTP:', error);
+    const isEmailSent = await sendEmail(
+      email,
+      'OTP for verification',
+      `Your OTP is ${otp}. It will expire in 5 minutes.`,
+      html,
+    );
+
+    if (!isEmailSent) {
+      await prisma.otp.delete({
+        where: { id: otpSent.id },
+      });
+      return res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
     }
+
     res.status(200).json({ message: 'OTP sent successfully' });
     setTimeout(async () => {
       const otpData = await prisma.otp.findFirst({
