@@ -4,6 +4,7 @@ import { Prisma, Branch } from '@prisma/client';
 import prisma from '../utils/prisma';
 import sendEmail from '../utils/sendEmail';
 import { adoShuffleSchema } from '../validators/AdoShuffleValidator';
+import { adoShuffleSubmissionSchema } from '../validators/AdoShuffleSubmissionValidator';
 import { isEmailPermittedForBranch } from '../utils/permittedEmails';
 
 /*Register – exactly 5 members from each branch*/
@@ -69,6 +70,12 @@ Thank you for registering for AdoShuffle.
 Branch: ${branch}
 Members: ${members.map(m => m.name).join(', ')}
 
+IMPORTANT — Submission Round:
+Your registration is not complete until you submit your Video and Poster.
+1. Upload your ad video and poster to Google Drive.
+2. Set access to "Anyone with the link".
+3. Go back to the registration page, select AdoShuffle, and submit both links in the Submission Round section.
+
 Team E-Cell NIT Silchar
 `;
 
@@ -109,6 +116,16 @@ Team E-Cell NIT Silchar
                     <p style="margin: 0 0 15px; font-size: 14px; color: #94a3b8;">Share this invite with your team members:</p>
                     <a href="https://wa.me/?text=Join%20our%20team%20for%20EIC%202026!%20Here%20is%20the%20WhatsApp%20group%20link:%20https://chat.whatsapp.com/K3YQ61zGpOyJoWDGvZacjU" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: bold;">Share via WhatsApp</a>
                 </div>
+            </div>
+
+            <div style="background-color: #1a1307; border: 1px solid #92400e; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                <p style="margin: 0 0 10px; font-size: 12px; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">⚠ Submission Round — Action Required</p>
+                <p style="margin: 0 0 12px; font-size: 14px; color: #fde68a; line-height: 1.6;">Your registration is <strong>not complete</strong> until you submit your <strong>Video</strong> and <strong>Poster</strong>.</p>
+                <ol style="margin: 0 0 12px; padding-left: 20px; color: #e2e8f0; font-size: 14px; line-height: 1.8;">
+                    <li>Upload your ad video and poster to <strong>Google Drive</strong>.</li>
+                    <li>Set access to <strong>"Anyone with the link"</strong>.</li>
+                    <li>Go back to the registration page, select <strong>AdoShuffle</strong>, and submit both links in the <strong>Submission Round</strong> section.</li>
+                </ol>
             </div>
 
             <p style="margin: 25px 0 0; font-size: 14px; color: #94a3b8; line-height: 1.6;">Further event details and updates will be communicated to this email address.</p>
@@ -201,6 +218,74 @@ export const getAdoShuffleSlots = async (req: Request, res: Response) => {
 
     res.status(500).json({
       message: 'Failed to fetch slots',
+    });
+  }
+};
+
+/*Submit video & poster links for a registered branch*/
+export const submitAdoShuffle = async (req: Request, res: Response) => {
+  try {
+    const parsed = adoShuffleSubmissionSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: parsed.error.issues[0].message,
+      });
+    }
+
+    const { videoLink, posterLink } = parsed.data;
+    if (!videoLink || !posterLink) {
+      return res.status(400).json({
+        message: 'Please provide both video and poster links',
+      });
+    }
+    const contactEmail = parsed.data.contactEmail.trim().toLowerCase();
+    const branch = parsed.data.branch.toUpperCase() as Branch;
+
+    /* Find existing registration */
+    const existing = await prisma.adoShuffle.findUnique({
+      where: { branch },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        message: `Branch ${branch} has not registered for AdoShuffle yet`,
+      });
+    }
+
+    /* Verify email ownership */
+    if (existing.contactEmail.toLowerCase() !== contactEmail) {
+      return res.status(403).json({
+        message: 'Email does not match the registered contact email',
+      });
+    }
+
+    /* Check if already submitted */
+    if (existing.videoLink && existing.posterLink) {
+      return res.status(400).json({
+        message: 'Submission has already been completed for this branch',
+      });
+    }
+
+    /* Update with submission links */
+    const updated = await prisma.adoShuffle.update({
+      where: { branch },
+      data: {
+        videoLink,
+        posterLink,
+        submittedAt: new Date(),
+      },
+    });
+
+    res.status(200).json({
+      message: 'Submission successful!',
+      data: updated,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: 'Server error',
     });
   }
 };
