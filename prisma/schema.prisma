@@ -54,11 +54,14 @@ model CampusCapitalist {
 }
 
 model AdoShuffle {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  branch       Branch   @unique
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  branch       Branch    @unique
   contactEmail String
   members      Member[]
-  createdAt    DateTime @default(now())
+  videoLink    String?
+  posterLink   String?
+  createdAt    DateTime  @default(now())
+  submittedAt  DateTime?
 }
 
 model TheDealroomEscape {

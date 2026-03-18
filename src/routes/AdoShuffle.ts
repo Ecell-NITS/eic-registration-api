@@ -4,11 +4,14 @@ import {
   getAdoShuffleRegistrations,
   checkAdoShuffleApplication,
   getAdoShuffleSlots,
+  submitAdoShuffle,
 } from '../controllers/AdoShuffle';
 
 const router = express.Router();
 
 router.post('/register', createAdoShuffle);
+
+router.post('/submit', submitAdoShuffle);
 
 router.get('/all', getAdoShuffleRegistrations);
 
