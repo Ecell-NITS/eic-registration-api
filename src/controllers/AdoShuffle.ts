@@ -89,11 +89,26 @@ Team E-Cell NIT Silchar
                 <p style="margin: 0; font-size: 18px; font-weight: bold; color: #cee7d7;">${branch}</p>
             </div>
 
-            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px;">
+            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
                 <p style="margin: 0 0 15px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Team Members</p>
                 <ul style="margin: 0; padding: 0; list-style-type: none;">
                     ${members.map(m => `<li style="padding: 10px 0; border-bottom: 1px solid #2a3a30; color: #ffffff;"><strong>${m.name}</strong></li>`).join('')}
                 </ul>
+            </div>
+
+            <div style="background-color: #111111; border: 1px solid #2a3a30; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 25px;">
+                <p style="margin: 0 0 15px; font-size: 16px; color: #ffffff; font-weight: bold;">Join the WhatsApp Group</p>
+                <p style="margin: 0 0 20px; font-size: 14px; color: #94a3b8;">Stay updated and connect with other participants!</p>
+                
+                <p style="margin: 0 0 10px; font-size: 12px; color: #94a3b8;">Click below or copy the link to join:</p>
+                <div style="background-color: #1a1a1a; border: 1px solid #2a3a30; border-radius: 4px; padding: 12px; margin-bottom: 20px; word-break: break-all;">
+                    <a href="https://chat.whatsapp.com/K3YQ61zGpOyJoWDGvZacjU" target="_blank" style="color: #cee7d7; font-size: 14px; text-decoration: none; font-weight: bold;">https://chat.whatsapp.com/K3YQ61zGpOyJoWDGvZacjU</a>
+                </div>
+
+                <div style="border-top: 1px solid #2a3a30; padding-top: 20px;">
+                    <p style="margin: 0 0 15px; font-size: 14px; color: #94a3b8;">Share this invite with your team members:</p>
+                    <a href="https://wa.me/?text=Join%20our%20team%20for%20EIC%202026!%20Here%20is%20the%20WhatsApp%20group%20link:%20https://chat.whatsapp.com/K3YQ61zGpOyJoWDGvZacjU" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: bold;">Share via WhatsApp</a>
+                </div>
             </div>
 
             <p style="margin: 25px 0 0; font-size: 14px; color: #94a3b8; line-height: 1.6;">Further event details and updates will be communicated to this email address.</p>
