@@ -133,7 +133,7 @@ Team E-Cell NIT Silchar
     /* Success Response */
 
     res.status(200).json({
-      message: 'Registration successful',
+      message: 'Registration successful! Check your email for more details.',
       team: newTeam,
     });
   } catch (error) {
