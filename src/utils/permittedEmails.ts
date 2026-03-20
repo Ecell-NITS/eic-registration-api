@@ -4,7 +4,7 @@ export const permittedEmails: Record<Branch, string[]> = {
   [Branch.CSE]: [
     'kartika.jauhari28@gmail.com',
     'soumyaranjandash005@gmail.com',
-    'dasbishal1717@gmail.com',
+    'ramanjain2003ghy@gmail.com',
   ],
   [Branch.EE]: ['connectwithshreyash@gmail.com', 'rra863872@gmail.com', 'himapahi38@gmail.com'],
   [Branch.ECE]: [
@@ -12,9 +12,13 @@ export const permittedEmails: Record<Branch, string[]> = {
     'tejeshpandey30@gmail.com',
     'ahironsharma08@gmail.com',
   ],
-  [Branch.EIE]: ['agrimagoel30@gmail.com', 'anmol.s.sahoo@gmail.com', 'bishaldad1717@gmail.com'],
+  [Branch.EIE]: ['agrimagoel30@gmail.com', 'anmol.s.sahoo@gmail.com', 'as1914459@gmail.com'],
   [Branch.CE]: ['prabhatrai1204@gmail.com', 'mgogoi080203@gmail.com', 'atulboi222@gmail.com'],
-  [Branch.ME]: ['k.saksham2022@gmail.com', 'k.saksham2022@gmail.com', 'dasnarayan1717@gmail.com'],
+  [Branch.ME]: [
+    'k.saksham2022@gmail.com',
+    'bemthoibi_ug_23@mech.nits.ac.in',
+    'dasnarayan1717@gmail.com',
+  ],
 };
 
 /**
